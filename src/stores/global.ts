@@ -2,10 +2,30 @@ import { defineStore } from 'pinia'
 
 export const useGlobalStore = defineStore('global', {
   state: () => ({
-    isDarkTheme: false
+    isDarkTheme: false,
+    cellSize: 40,
+    cols: 10,
+    rows: 10,
+    roomId: -1
   }),
   // Computed properties
   getters: {},
   // Methods that mutate the store
-  actions: {}
+  actions: {
+    toggleTheme() {
+      this.isDarkTheme = !this.isDarkTheme
+    },
+    setCellSize(size: number) {
+      this.cellSize = size
+    },
+    setCols(cols: number) {
+      this.cols = cols
+    },
+    setRows(rows: number) {
+      this.rows = rows
+    },
+    setRoomId(roomId: number) {
+      this.roomId = roomId
+    }
+  }
 })
