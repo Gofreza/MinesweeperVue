@@ -6,7 +6,9 @@ export const useGlobalStore = defineStore('global', {
     cellSize: 40,
     cols: 10,
     rows: 10,
-    roomId: -1
+    roomId: -1,
+    isFinish: false,
+    isWin: false
   }),
   // Computed properties
   getters: {},

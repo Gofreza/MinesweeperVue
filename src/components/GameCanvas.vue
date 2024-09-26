@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { useGlobalStore } from '@/stores/global'
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
+import GameEnding from '@/components/GameEnding.vue'
+
 import axios from 'axios'
 const store = useGlobalStore()
+var canvas = null
+var isGameEnding = ref(false)
+
 
 const drawGrid = () => {
   console.log(store.rows, store.cols, store.cellSize)
@@ -214,12 +219,24 @@ const redrawGrid = (data: any, cellSize: number) => {
 }
 
 const handleGameUpdate = (data: any) => {
+  console.log(data)
+  // Check if game is end
+  console.log(data.isGameEnded)
+  if (data.isGameEnded){
+    isGameEnding.value = true
+
+    canvas.removeEventListener("click", handleCanvasLeftClick)
+    canvas.removeEventListener('contextmenu', handleCanvasRightClick)
+
+    console.log('la partie est terminé')
+  }
   redrawGrid(data.changedCells, store.cellSize)
+  
 }
 
 onMounted(() => {
   drawGrid()
-  const canvas = document.getElementById('game-canvas') as HTMLCanvasElement
+  canvas = document.getElementById('game-canvas') as HTMLCanvasElement
   if (canvas) {
     canvas.addEventListener('click', handleCanvasLeftClick)
     canvas.addEventListener('contextmenu', handleCanvasRightClick)
@@ -234,5 +251,8 @@ onMounted(() => {
       :width="store.cols * store.cellSize"
       :height="store.rows * store.cellSize"
     ></canvas>
+    <div v-if="isGameEnding">
+      <GameEnding/>
+    </div>
   </div>
 </template>

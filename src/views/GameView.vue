@@ -17,7 +17,7 @@ function beginGame() {
       <GameInputs @begin-game="beginGame" />
     </div>
     <div v-else>
-      <GameCanvas />
+      <GameCanvas/>
     </div>
   </main>
 </template>
