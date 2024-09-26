@@ -70,7 +70,7 @@ const handleCanvasRightClick = async (event: MouseEvent): Promise<void> => {
         col: coordinates.col,
         roomId: store.roomId
       })
-      handleGameUpdate([response.data])
+      handleGameUpdate(response.data)
     } catch (error) {
       console.error('Error:', error)
     }
@@ -214,14 +214,7 @@ const redrawGrid = (data: any, cellSize: number) => {
 }
 
 const handleGameUpdate = (data: any) => {
-  let array = null
-  if (data.changedCells) {
-    array = data.changedCells
-  } else {
-    array = data
-  }
-
-  redrawGrid(array, store.cellSize)
+  redrawGrid(data.changedCells, store.cellSize)
 }
 
 onMounted(() => {
