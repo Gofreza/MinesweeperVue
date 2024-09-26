@@ -5,18 +5,15 @@ import GameEnding from '@/components/GameEnding.vue'
 
 import axios from 'axios'
 const store = useGlobalStore()
-var canvas = null
+var canvas: any = ref(null)
 var isGameEnding = ref(false)
 
-
 const drawGrid = () => {
-  console.log(store.rows, store.cols, store.cellSize)
-  const canvas = document.getElementById('game-canvas') as HTMLCanvasElement
-  if (!canvas) return
-  const ctx = canvas.getContext('2d')
+  if (!canvas.value) return
+  const ctx = canvas.value.getContext('2d')
   if (!ctx) return
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.clearRect(0, 0, canvas.value.width, canvas.value.height)
 
   ctx.fillStyle = '#999999'
   ctx.fillRect(0, 0, store.cols * store.cellSize, store.rows * store.cellSize)
@@ -32,10 +29,9 @@ const drawGrid = () => {
 }
 
 const getGridCoordinates = (clientX: number, clientY: number) => {
-  const canvas = document.getElementById('game-canvas') as HTMLCanvasElement
-  if (!canvas) return
+  if (!canvas.value) return
 
-  const rect = canvas.getBoundingClientRect()
+  const rect = canvas.value.getBoundingClientRect()
   const x = clientX - rect.left
   const y = clientY - rect.top
 
@@ -142,9 +138,8 @@ const drawBomb = (ctx: any, x: number, y: number, radius: number, offset: number
 }
 
 const redrawGrid = (data: any, cellSize: number) => {
-  const canvas = document.getElementById('game-canvas') as HTMLCanvasElement
-  if (!canvas) return
-  const ctx = canvas.getContext('2d')
+  if (!canvas.value) return
+  const ctx = canvas.value.getContext('2d')
   if (!ctx) return
 
   ctx.strokeStyle = '#000000'
@@ -219,27 +214,24 @@ const redrawGrid = (data: any, cellSize: number) => {
 }
 
 const handleGameUpdate = (data: any) => {
-  console.log(data)
   // Check if game is end
-  console.log(data.isGameEnded)
-  if (data.isGameEnded){
+  if (data.isGameEnded) {
     isGameEnding.value = true
 
-    canvas.removeEventListener("click", handleCanvasLeftClick)
-    canvas.removeEventListener('contextmenu', handleCanvasRightClick)
+    canvas.value?.removeEventListener('click', handleCanvasLeftClick)
+    canvas.value?.removeEventListener('contextmenu', handleCanvasRightClick)
 
     console.log('la partie est terminé')
   }
   redrawGrid(data.changedCells, store.cellSize)
-  
 }
 
 onMounted(() => {
+  canvas.value = document.getElementById('game-canvas') as HTMLCanvasElement
   drawGrid()
-  canvas = document.getElementById('game-canvas') as HTMLCanvasElement
-  if (canvas) {
-    canvas.addEventListener('click', handleCanvasLeftClick)
-    canvas.addEventListener('contextmenu', handleCanvasRightClick)
+  if (canvas.value) {
+    canvas.value.addEventListener('click', handleCanvasLeftClick)
+    canvas.value.addEventListener('contextmenu', handleCanvasRightClick)
   }
 })
 </script>
@@ -252,7 +244,7 @@ onMounted(() => {
       :height="store.rows * store.cellSize"
     ></canvas>
     <div v-if="isGameEnding">
-      <GameEnding/>
+      <GameEnding />
     </div>
   </div>
 </template>
