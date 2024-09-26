@@ -2,8 +2,12 @@
 import { useGlobalStore } from '@/stores/global'
 import { onMounted, ref } from 'vue'
 import GameEnding from '@/components/GameEnding.vue'
-
 import axios from 'axios'
+
+const props = defineProps<{
+  isGameReload: boolean
+}>()
+
 const store = useGlobalStore()
 var canvas: any = ref(null)
 var isGameEnding = ref(false)
@@ -137,7 +141,7 @@ const drawBomb = (ctx: any, x: number, y: number, radius: number, offset: number
   ctx.closePath()
 }
 
-const redrawGrid = (data: any, cellSize: number) => {
+const redrawGrid = (data: any, cellSize: number, isFinished: boolean = false) => {
   if (!canvas.value) return
   const ctx = canvas.value.getContext('2d')
   if (!ctx) return
@@ -146,12 +150,13 @@ const redrawGrid = (data: any, cellSize: number) => {
   ctx.lineWidth = 1
 
   data.forEach((element: any) => {
+    console.log("El:", element)
     const x = element.col * cellSize
     const y = element.row * cellSize
 
     if (element.cell.flagged) {
       // Set the background color
-      ctx.fillStyle = '#999999'
+      ctx.fillStyle = '#888888'
       ctx.fillRect(x, y, cellSize, cellSize)
 
       // Draw a red square
@@ -163,47 +168,44 @@ const redrawGrid = (data: any, cellSize: number) => {
         cellSize / 2
       ) // Draw a flag
     } else {
-      if (!element.cell.visible) {
-        // Draw the background
+      // Draw the background
+      if (isFinished && !element.cell.visible && !element.cell.bomb)
         ctx.fillStyle = '#999999'
-        ctx.fillRect(x, y, cellSize, cellSize)
-      } else {
-        // Draw the background
+      else
         ctx.fillStyle = '#f9f8f5'
-        ctx.fillRect(x, y, cellSize, cellSize)
+      ctx.fillRect(x, y, cellSize, cellSize)
 
-        // Determine the text color
-        let textColor = '#000000'
-        if (element.cell.bombAround === 1) {
-          textColor = 'blue'
-        } else if (element.cell.bombAround === 2) {
-          textColor = 'green'
-        } else if (element.cell.bombAround === 3) {
-          textColor = 'red'
-        } else if (element.cell.bombAround === 4) {
-          textColor = '#00008B'
-        } else if (element.cell.bombAround === 5) {
-          textColor = '#8B0000'
-        } else if (element.cell.bombAround === 6) {
-          textColor = '#00FFFF'
-        } else if (element.cell.bombAround === 7) {
-          textColor = 'black'
-        } else if (element.cell.bombAround === 8) {
-          textColor = 'grey'
-        }
+      // Determine the text color
+      let textColor = '#000000'
+      if (element.cell.bombAround === 1) {
+        textColor = 'blue'
+      } else if (element.cell.bombAround === 2) {
+        textColor = 'green'
+      } else if (element.cell.bombAround === 3) {
+        textColor = 'red'
+      } else if (element.cell.bombAround === 4) {
+        textColor = '#00008B'
+      } else if (element.cell.bombAround === 5) {
+        textColor = '#8B0000'
+      } else if (element.cell.bombAround === 6) {
+        textColor = '#00FFFF'
+      } else if (element.cell.bombAround === 7) {
+        textColor = 'black'
+      } else if (element.cell.bombAround === 8) {
+        textColor = 'grey'
+      }
 
-        // Draw the text
-        if (element.cell.bombAround !== 0) {
-          ctx.fillStyle = textColor
-          ctx.font = '20px Arial'
-          ctx.textAlign = 'center'
-          ctx.textBaseline = 'middle'
-          ctx.fillText(element.cell.bombAround.toString(), x + cellSize / 2, y + cellSize / 2)
-        } else {
-          if (element.cell.bomb) {
-            console.log('Cell:', element.cell.bomb)
-            drawBomb(ctx, x + cellSize / 2, y + cellSize / 2, cellSize / 4, cellSize / 8)
-          }
+      // Draw the text
+      if (element.cell.bombAround !== 0) {
+        ctx.fillStyle = textColor
+        ctx.font = '20px Arial'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(element.cell.bombAround.toString(), x + cellSize / 2, y + cellSize / 2)
+      } else {
+        if (element.cell.bomb) {
+          console.log('Cell:', element.cell.bomb)
+          drawBomb(ctx, x + cellSize / 2, y + cellSize / 2, cellSize / 4, cellSize / 8)
         }
       }
     }
@@ -213,20 +215,59 @@ const redrawGrid = (data: any, cellSize: number) => {
   })
 }
 
-const handleGameUpdate = (data: any) => {
-  // Check if game is end
-  if (data.isGameEnded) {
-    isGameEnding.value = true
-
-    canvas.value?.removeEventListener('click', handleCanvasLeftClick)
-    canvas.value?.removeEventListener('contextmenu', handleCanvasRightClick)
-
-    console.log('la partie est terminé')
-  }
-  redrawGrid(data.changedCells, store.cellSize)
+const recoverGrid = async () => {
+  try {
+      const response = await axios.post('http://localhost:8080/game/get', {
+        roomId : store.roomId
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error:', error)
+    }
 }
 
-onMounted(() => {
+const deleteRoom = async () => {
+  try {
+    await axios.delete('http://localhost:8080/game', {
+      data: {
+        roomId: store.roomId
+      }
+    });
+    
+    store.setRoomId(-1);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+const handleGameUpdate = (data: any) => {
+  let gameStopped = false
+  // Check if game is end
+  if (data.isGameEnded) {
+    gameStopped = true
+    isGameEnding.value = true
+    recoverGrid()
+      .then((grid) => {
+        redrawGrid(grid.changedCells, store.cellSize, true);
+        deleteRoom()
+        canvas.value?.removeEventListener('click', handleCanvasLeftClick)
+        canvas.value?.removeEventListener('contextmenu', handleCanvasRightClick)
+
+        console.log('la partie est terminé')
+      })
+    
+  }
+  if (!gameStopped)
+    redrawGrid(data.changedCells, store.cellSize)
+}
+
+onMounted(async () => {
+  if(props.isGameReload) {
+    recoverGrid()
+    .then((grid) => {
+      handleGameUpdate(grid, store.cellSize);
+    })
+  }
   canvas.value = document.getElementById('game-canvas') as HTMLCanvasElement
   drawGrid()
   if (canvas.value) {

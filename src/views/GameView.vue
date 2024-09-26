@@ -1,14 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import GameInputs from '@/components/GameInputs.vue'
 import GameCanvas from '@/components/GameCanvas.vue'
+import { useGlobalStore } from '@/stores/global'
 
 var isGameRunning = ref(false)
+const store = useGlobalStore()
+let isGameReload = false
 
 function beginGame() {
   isGameRunning.value = true
   console.log('hi', isGameRunning.value)
 }
+
+const isReload = () => {
+  console.log(store.roomId)
+  
+  if(store.roomId != -1){
+    isGameReload = true
+    isGameRunning.value = true
+  }
+}
+
+onMounted(() => {
+  isReload()
+})
 </script>
 
 <template>
@@ -17,7 +33,7 @@ function beginGame() {
       <GameInputs @begin-game="beginGame" />
     </div>
     <div v-else>
-      <GameCanvas/>
+      <GameCanvas :isGameReload="isGameReload" />
     </div>
   </main>
 </template>

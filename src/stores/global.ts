@@ -29,5 +29,13 @@ export const useGlobalStore = defineStore('global', {
     setRoomId(roomId: number) {
       this.roomId = roomId
     }
+  },
+  persist: {
+    enabled:true,
+    strategies: [
+      {key: 'global',
+      storage: sessionStorage,}
+    ] 
   }
+
 })
