@@ -214,7 +214,6 @@ const redrawGrid = (data: any, cellSize: number) => {
 }
 
 const handleGameUpdate = (data: any) => {
-  console.log('Game Update:', data)
   let array = null
   if (data.changedCells) {
     array = data.changedCells
