@@ -7,16 +7,18 @@ const store = useGlobalStore()
 let col = store.cols
 let row = store.rows
 var isMultiplayer = false
-var difficulties = ['EASY', 'HARD']
+var difficulties = ['EASY', 'MEDIUM', 'HARD', 'VERYHARD']
+var difficulty = 'EASY'
 
 const emit = defineEmits(['begin-game'])
 
 async function sendInputs() {
   try {
+    console.log('D:', difficulty)
     const payload = {
       rows: row,
       cols: col,
-      difficulty: difficulties[0],
+      difficulty: difficulty,
       isMultiplayer: isMultiplayer,
       username: store.username
     }
@@ -44,7 +46,7 @@ async function sendInputs() {
 
     <div>
       <label for="difficulties">Difficulty:</label>
-      <select id="difficulties" v-model="difficulties[0]">
+      <select id="difficulties" v-model="difficulty">
         <option v-for="difficulty in difficulties" :key="difficulty" :value="difficulty">
           {{ difficulty }}
         </option>

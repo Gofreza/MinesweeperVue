@@ -204,7 +204,7 @@ const redrawGrid = (data: any, cellSize: number, isFinished: boolean = false) =>
 
     if (element.cell.flagged) {
       // Set the background color
-      ctx.fillStyle = '#888888'
+      ctx.fillStyle = '#999999'
       ctx.fillRect(x, y, cellSize, cellSize)
 
       // Draw a red square
@@ -217,7 +217,7 @@ const redrawGrid = (data: any, cellSize: number, isFinished: boolean = false) =>
       ) // Draw a flag
     } else {
       // Draw the background
-      if (!element.cell.visible && !isFinished) ctx.fillStyle = '#888888'
+      if (!element.cell.visible && !isFinished) ctx.fillStyle = '#999999'
       else if (isFinished && !element.cell.visible && !element.cell.bomb) ctx.fillStyle = '#999999'
       else ctx.fillStyle = '#f9f8f5'
       ctx.fillRect(x, y, cellSize, cellSize)
