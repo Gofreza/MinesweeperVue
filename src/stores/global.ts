@@ -8,7 +8,8 @@ export const useGlobalStore = defineStore('global', {
     rows: 10,
     roomId: -1,
     isFinish: false,
-    isWin: false
+    isWin: false,
+    time: 0
   }),
   // Computed properties
   getters: {},
@@ -28,6 +29,9 @@ export const useGlobalStore = defineStore('global', {
     },
     setRoomId(roomId: number) {
       this.roomId = roomId
+    },
+    setElapsedTime(time: number){
+      this.time = time
     }
   },
   persist: {
