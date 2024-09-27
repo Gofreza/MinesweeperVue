@@ -283,7 +283,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
+  <div class="canvas-container">
     <canvas
       id="game-canvas"
       :width="store.cols * store.cellSize"
@@ -294,3 +294,19 @@ onMounted(async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+  .canvas-container {
+    position:relative;
+    /* padding: 100px; */
+    max-width: 800px;
+    max-height: 800px;
+    overflow:auto;
+  }
+  #game-canvas {
+    width: auto; /* Laisse le canvas s'ajuster à sa largeur d'origine */
+    height: auto; /* Laisse le canvas s'ajuster à sa hauteur d'origine */
+    display: block; /* Évite les espaces en bas du canvas */
+    overflow: auto;
+  }
+</style>
