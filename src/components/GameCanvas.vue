@@ -242,8 +242,13 @@ const deleteRoom = async () => {
 
 const handleGameUpdate = (data: any) => {
   let gameStopped = false
+  console.log (data)
   // Check if game is end
   if (data.isGameEnded) {
+    if(data.isGameWin)
+      store.isWin = true
+    else
+      store.isWin = false
     gameStopped = true
     isGameEnding.value = true
     recoverGrid()
@@ -265,7 +270,7 @@ onMounted(async () => {
   if(props.isGameReload) {
     recoverGrid()
     .then((grid) => {
-      handleGameUpdate(grid, store.cellSize);
+      handleGameUpdate(grid);
     })
   }
   canvas.value = document.getElementById('game-canvas') as HTMLCanvasElement

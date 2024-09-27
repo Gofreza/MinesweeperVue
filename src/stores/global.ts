@@ -8,7 +8,7 @@ export const useGlobalStore = defineStore('global', {
     rows: 10,
     roomId: -1,
     isFinish: false,
-    isWin: false
+    isWin: false,
   }),
   // Computed properties
   getters: {},
@@ -31,11 +31,7 @@ export const useGlobalStore = defineStore('global', {
     }
   },
   persist: {
-    enabled:true,
-    strategies: [
-      {key: 'global',
-      storage: sessionStorage,}
-    ] 
+    storage:sessionStorage
   }
 
 })
