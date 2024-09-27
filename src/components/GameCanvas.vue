@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useGlobalStore } from '@/stores/global'
-import { onMounted, ref } from 'vue'
-import axios from 'axios'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
 import GameEnding from '@/components/GameEnding.vue'
+import axios from 'axios'
 import SockJS from 'sockjs-client/dist/sockjs'
 import Stomp from 'webstomp-client'
 
@@ -21,10 +21,11 @@ const props = defineProps<{
     }>
   }
 }>()
-
 const store = useGlobalStore()
 var canvas: any = ref(null)
 var isGameEnding = ref(false)
+let elapsedTime = ref(0)
+let timerId: ReturnType<typeof setInterval> | null = null
 
 var stompClient: any = null
 
@@ -281,6 +282,11 @@ const handleGameUpdate = (data: any) => {
   if (data.isGameEnded) {
     if (data.changedCells.length == store.cols * store.rows) {
       redrawGrid(data.changedCells, store.cellSize, true)
+      stopTimer()
+
+      if (data.isGameWin) store.isWin = true
+      else store.isWin = false
+
       deleteRoom()
       canvas.value?.removeEventListener('click', handleCanvasLeftClick)
       canvas.value?.removeEventListener('contextmenu', handleCanvasRightClick)
@@ -290,7 +296,33 @@ const handleGameUpdate = (data: any) => {
   } else redrawGrid(data.changedCells, store.cellSize)
 }
 
+const formattedTime = computed(() => {
+  const minutes = String(Math.floor(elapsedTime.value / 60)).padStart(2, '0')
+  const seconds = String(elapsedTime.value % 60).padStart(2, '0')
+  return `${minutes}:${seconds}`
+})
+
+const startTimer = () => {
+  timerId = setInterval(() => {
+    elapsedTime.value += 1 // Increment elapsed time
+  }, 1000)
+}
+
+const stopTimer = () => {
+  if (timerId) {
+    clearInterval(timerId) // Stop the timer
+    timerId = null
+  }
+}
+
 onMounted(async () => {
+  startTimer()
+  if (props.isGameReload) {
+    elapsedTime.value = store.time
+    recoverGrid().then((grid) => {
+      handleGameUpdate(grid)
+    })
+  }
   connect()
   canvas.value = document.getElementById('game-canvas') as HTMLCanvasElement
   drawGrid()
@@ -303,17 +335,56 @@ onMounted(async () => {
     canvas.value.addEventListener('contextmenu', handleCanvasRightClick)
   }
 })
+
+onUnmounted(() => {
+  store.setElapsedTime(elapsedTime.value)
+})
 </script>
 
 <template>
-  <div>
-    <canvas
-      id="game-canvas"
-      :width="store.cols * store.cellSize"
-      :height="store.rows * store.cellSize"
-    ></canvas>
-    <div v-if="isGameEnding">
-      <GameEnding />
+  <div class="container">
+    <div class="sidebar">
+      <h2>Informations supplémentaires...</h2>
+      <div class="timer">
+        <p>Temps écoulé : {{ formattedTime }} Bombe restante :</p>
+      </div>
+    </div>
+    <div class="canvas-container">
+      <canvas
+        id="game-canvas"
+        :width="store.cols * store.cellSize"
+        :height="store.rows * store.cellSize"
+      ></canvas>
+      <div v-if="isGameEnding">
+        <GameEnding />
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+}
+.sidebar {
+  height: fit-content;
+  padding: 20px;
+  background-color: var(--color-background);
+}
+.canvas-container {
+  padding: 10px;
+  position: relative;
+  max-width: 800px;
+  max-height: 800px;
+  overflow: auto;
+}
+#game-canvas {
+  width: auto;
+  height: auto;
+  display: block;
+}
+</style>
