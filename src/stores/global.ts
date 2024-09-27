@@ -8,7 +8,9 @@ export const useGlobalStore = defineStore('global', {
     rows: 10,
     roomId: -1,
     isFinish: false,
-    isWin: false
+    isWin: false,
+    isMulti: false,
+    username: 'player1'
   }),
   // Computed properties
   getters: {},

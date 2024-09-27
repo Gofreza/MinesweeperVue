@@ -1,13 +1,25 @@
 <script setup lang="ts">
 import { useGlobalStore } from '@/stores/global'
 import { onMounted, ref } from 'vue'
-import GameEnding from '@/components/GameEnding.vue'
 import axios from 'axios'
+import GameEnding from '@/components/GameEnding.vue'
 import SockJS from 'sockjs-client/dist/sockjs'
 import Stomp from 'webstomp-client'
 
 const props = defineProps<{
   isGameReload: boolean
+  grid: {
+    changedCells: Array<{
+      row: number
+      col: number
+      cell: {
+        visible: boolean
+        flagged: boolean
+        bomb: boolean
+        bombAround: number
+      }
+    }>
+  }
 }>()
 
 const store = useGlobalStore()
@@ -32,15 +44,27 @@ const onError = (error: any) => {
 
 const onMessageReceived = (payload: any) => {
   const message = JSON.parse(payload.body)
-  handleGameUpdate(message)
+  console.log('Message:', message)
+  console.log(message.roomId == store.roomId, message.roomId, store.roomId)
+  if (message.roomId == store.roomId) {
+    if (store.isMulti) {
+      if (message.username === store.username) {
+        console.log('Bonjour multi')
+      }
+    } else {
+      // console.log('Message:', payload)
+      // if (message === 'Delete successful') {
+      //   isGameEnding.value = true
+      //   store.setRoomId(-1)
+      //   return
+      // }
+
+      handleGameUpdate(message)
+    }
+  }
 }
 
-const sendMessage = (path: string, row: number, col: number, roomId: number) => {
-  const payload = {
-    row: row,
-    col: col,
-    roomId: roomId
-  }
+const sendMessage = (path: string, payload: any) => {
   stompClient.send('/app/' + path, JSON.stringify(payload), {})
 }
 
@@ -81,18 +105,13 @@ const handleCanvasLeftClick = async (event: MouseEvent): Promise<void> => {
   const { clientX, clientY } = event
   const coordinates = getGridCoordinates(clientX, clientY)
   if (coordinates) {
-    // console.log('Grid Coordinates:', coordinates)
-    // try {
-    //   const response = await axios.post('http://localhost:8080/game/play', {
-    //     row: coordinates.row,
-    //     col: coordinates.col,
-    //     roomId: store.roomId
-    //   })
-    //   handleGameUpdate(response.data)
-    // } catch (error) {
-    //   console.error('Error:', error)
-    // }
-    sendMessage('play', coordinates.row, coordinates.col, store.roomId)
+    const payload = {
+      row: coordinates.row,
+      col: coordinates.col,
+      roomId: store.roomId,
+      username: store.isMulti ? 'player1' : null
+    }
+    sendMessage('play', payload)
   }
 }
 
@@ -101,18 +120,13 @@ const handleCanvasRightClick = async (event: MouseEvent): Promise<void> => {
   const { clientX, clientY } = event
   const coordinates = getGridCoordinates(clientX, clientY)
   if (coordinates) {
-    // console.log('Grid Coordinates:', coordinates)
-    // try {
-    //   const response = await axios.post('http://localhost:8080/game/flag', {
-    //     row: coordinates.row,
-    //     col: coordinates.col,
-    //     roomId: store.roomId
-    //   })
-    //   handleGameUpdate(response.data)
-    // } catch (error) {
-    //   console.error('Error:', error)
-    // }
-    sendMessage('flag', coordinates.row, coordinates.col, store.roomId)
+    const payload = {
+      row: coordinates.row,
+      col: coordinates.col,
+      roomId: store.roomId,
+      username: store.isMulti ? 'player1' : null
+    }
+    sendMessage('flag', payload)
   }
 }
 
@@ -202,7 +216,8 @@ const redrawGrid = (data: any, cellSize: number, isFinished: boolean = false) =>
       ) // Draw a flag
     } else {
       // Draw the background
-      if (isFinished && !element.cell.visible && !element.cell.bomb) ctx.fillStyle = '#999999'
+      if (!element.cell.visible && !isFinished) ctx.fillStyle = '#888888'
+      else if (isFinished && !element.cell.visible && !element.cell.bomb) ctx.fillStyle = '#999999'
       else ctx.fillStyle = '#f9f8f5'
       ctx.fillRect(x, y, cellSize, cellSize)
 
@@ -247,24 +262,15 @@ const redrawGrid = (data: any, cellSize: number, isFinished: boolean = false) =>
 }
 
 const recoverGrid = async () => {
-  try {
-    const response = await axios.post('http://localhost:8080/game/get', {
-      roomId: store.roomId
-    })
-    return response.data
-  } catch (error) {
-    console.error('Error:', error)
-  }
+  sendMessage('grid', store.roomId)
 }
 
 const deleteRoom = async () => {
   try {
     await axios.delete('http://localhost:8080/game', {
-      data: {
-        roomId: store.roomId
-      }
+      data: { roomId: store.roomId }
     })
-
+    isGameEnding.value = true
     store.setRoomId(-1)
   } catch (error) {
     console.error('Error:', error)
@@ -272,32 +278,26 @@ const deleteRoom = async () => {
 }
 
 const handleGameUpdate = (data: any) => {
-  let gameStopped = false
-  // Check if game is end
   if (data.isGameEnded) {
-    gameStopped = true
-    isGameEnding.value = true
-    recoverGrid().then((grid) => {
-      redrawGrid(grid.changedCells, store.cellSize, true)
+    if (data.changedCells.length == store.cols * store.rows) {
+      redrawGrid(data.changedCells, store.cellSize, true)
       deleteRoom()
       canvas.value?.removeEventListener('click', handleCanvasLeftClick)
       canvas.value?.removeEventListener('contextmenu', handleCanvasRightClick)
 
       console.log('la partie est terminé')
-    })
-  }
-  if (!gameStopped) redrawGrid(data.changedCells, store.cellSize)
+    } else recoverGrid()
+  } else redrawGrid(data.changedCells, store.cellSize)
 }
 
 onMounted(async () => {
-  if (props.isGameReload) {
-    recoverGrid().then((grid) => {
-      handleGameUpdate(grid)
-    })
-  }
   connect()
   canvas.value = document.getElementById('game-canvas') as HTMLCanvasElement
   drawGrid()
+  if (props.isGameReload) {
+    console.log('Grid:', props.grid)
+    redrawGrid(props.grid.changedCells, store.cellSize)
+  }
   if (canvas.value) {
     canvas.value.addEventListener('click', handleCanvasLeftClick)
     canvas.value.addEventListener('contextmenu', handleCanvasRightClick)

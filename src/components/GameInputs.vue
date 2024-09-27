@@ -13,14 +13,17 @@ const emit = defineEmits(['begin-game'])
 
 async function sendInputs() {
   try {
-    const response = await axios.post('http://localhost:8080/game/new', {
+    const payload = {
       rows: row,
       cols: col,
       difficulty: difficulties[0],
-      isMultiplayer: isMultiplayer
-    })
+      isMultiplayer: isMultiplayer,
+      username: store.username
+    }
+    console.log('Payload:', payload)
+    const response = await axios.post('http://localhost:8080/game/new', payload)
     console.log('Response:', response.data)
-    store.setRoomId(response.data)
+    store.setRoomId(response.data.roomId)
     store.setRows(row)
     store.setCols(col)
     emit('begin-game')
