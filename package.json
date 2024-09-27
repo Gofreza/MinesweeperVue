@@ -19,14 +19,17 @@
     "axios": "^1.7.7",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^4.0.2",
+    "sockjs-client": "^1.6.1",
     "vue": "^3.4.29",
-    "vue-router": "^4.3.3"
+    "vue-router": "^4.3.3",
+    "webstomp-client": "^1.2.6"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.8.0",
     "@tsconfig/node20": "^20.1.4",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^20.14.5",
+    "@types/sockjs-client": "^1.5.4",
     "@vitejs/plugin-vue": "^5.0.5",
     "@vitejs/plugin-vue-jsx": "^4.0.0",
     "@vue/eslint-config-prettier": "^9.0.0",

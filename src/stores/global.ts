@@ -31,11 +31,6 @@ export const useGlobalStore = defineStore('global', {
     }
   },
   persist: {
-    enabled:true,
-    strategies: [
-      {key: 'global',
-      storage: sessionStorage,}
-    ] 
+    storage: sessionStorage
   }
-
 })
