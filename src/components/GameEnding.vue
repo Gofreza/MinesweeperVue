@@ -7,7 +7,7 @@
     const isActive = ref(false);
 
     onMounted(() => {
-        isActive.value = true; // Affiche le modal automatiquement au montage
+        isActive.value = true;
     });
 </script>
 <template>
@@ -48,7 +48,7 @@ visibility: hidden;
 }
 
 .modal-content {
-    background: white;
+    background: var(--color-background);
     padding: 2em;
     border-radius: 8px;
     text-align: center;
