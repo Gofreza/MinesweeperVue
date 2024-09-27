@@ -35,7 +35,6 @@ export const useGlobalStore = defineStore('global', {
     }
   },
   persist: {
-    storage:sessionStorage
+    storage: sessionStorage
   }
-
 })
